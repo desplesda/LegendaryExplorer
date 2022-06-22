@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml.Math;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using LegendaryExplorer.Dialogs;
@@ -25,6 +26,11 @@ namespace LegendaryExplorer.UserControls.ExportLoaderControls.ScriptEditor
     /// </summary>
     public partial class UnrealScriptIDE : ExportLoaderControl
     {
+        /// <summary>
+        /// Text to set after the export is loaded - can be used for things such as popping out
+        /// </summary>
+        private string PreloadText;
+
         public string ScriptText
         {
             get => Document?.Text;
@@ -58,6 +64,11 @@ namespace LegendaryExplorer.UserControls.ExportLoaderControls.ScriptEditor
             textEditor.TextArea.TextEntered += TextAreaOnTextEntered;
             _definitionLinkGenerator = new DefinitionLinkGenerator(ScrollTo);
             textEditor.TextArea.TextView.ElementGenerators.Add(_definitionLinkGenerator);
+        }
+
+        public UnrealScriptIDE(string preText) : this()
+        {
+            PreloadText = preText;
         }
 
         public override bool CanParse(ExportEntry exportEntry) =>
@@ -124,7 +135,8 @@ namespace LegendaryExplorer.UserControls.ExportLoaderControls.ScriptEditor
         {
             if (CurrentLoadedExport != null)
             {
-                var elhw = new ExportLoaderHostedWindow(new UnrealScriptIDE(), CurrentLoadedExport)
+                // Pass the current text through
+                var elhw = new ExportLoaderHostedWindow(new UnrealScriptIDE(ScriptText), CurrentLoadedExport)
                 {
                     Title = $"Script Viewer - {CurrentLoadedExport.UIndex} {CurrentLoadedExport.InstancedFullPath} - {CurrentLoadedExport.FileRef.FilePath}"
                 };
@@ -423,11 +435,17 @@ namespace LegendaryExplorer.UserControls.ExportLoaderControls.ScriptEditor
                         textEditor.SyntaxHighlighting = syntaxInfo;
                     }
 
-
+                    if (PreloadText != null)
+                    {
+                        // This is to prevent a loop where preload text is set so it doesn't try to constantly decomp
+                        var temp = PreloadText;
+                        PreloadText = null;
+                        ScriptText = temp;
+                    }
                 }
                 catch (Exception e) //when (!App.IsDebug)
                 {
-                    ScriptText = $"Error occured while decompiling {CurrentLoadedExport?.InstancedFullPath}:\n\n{e.FlattenException()}";
+                    ScriptText = $"Error occurred while decompiling {CurrentLoadedExport?.InstancedFullPath}:\n\n{e.FlattenException()}";
                 }
             });
         }
