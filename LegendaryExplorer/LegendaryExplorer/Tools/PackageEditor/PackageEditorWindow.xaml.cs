@@ -40,6 +40,8 @@ using LegendaryExplorerCore.UnrealScript;
 using LegendaryExplorerCore.UnrealScript.Compiling.Errors;
 using Microsoft.Win32;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using WwiseParserLib.Structures.Chunks;
+using WwiseParserLib.Structures.SoundBanks;
 
 namespace LegendaryExplorer.Tools.PackageEditor
 {
@@ -187,6 +189,7 @@ namespace LegendaryExplorer.Tools.PackageEditor
         public ICommand ExportBinaryDataCommand { get; set; }
         public ICommand ImportAllDataCommand { get; set; }
         public ICommand ImportBinaryDataCommand { get; set; }
+        public ICommand AnalyzeWwiseBankCommand { get; set; }
         public ICommand CloneCommand { get; set; }
         public ICommand CloneTreeCommand { get; set; }
         public ICommand MultiCloneCommand { get; set; }
@@ -307,7 +310,26 @@ namespace LegendaryExplorer.Tools.PackageEditor
             NavigateForwardCommand = new GenericCommand(NavigateToNextEntry, () => CurrentView == CurrentViewMode.Tree && ForwardsIndexes != null && ForwardsIndexes.Any());
             NavigateBackCommand = new GenericCommand(NavigateToPreviousEntry, () => CurrentView == CurrentViewMode.Tree && BackwardsIndexes != null && BackwardsIndexes.Any());
 
+            AnalyzeWwiseBankCommand = new GenericCommand(AnalyzeWwiseBank, () => ExportClassIsSelected("WwiseBank"));
+
+
             CreateClassCommand = new GenericCommand(CreateClass, IsLoadedPackageME);
+        }
+
+        private bool ExportClassIsSelected(string className)
+        {
+            return TryGetSelectedExport(out var exp) && !exp.IsDefaultObject && exp.ClassName == className;
+        }
+
+        private void AnalyzeWwiseBank()
+        {
+            if (TryGetSelectedExport(out var exp))
+            {
+                var bankFile = exp.GetBinaryData().Skip(0x10).ToArray(); // Skip bulk data
+                SoundBank sb = new InMemorySoundBank(bankFile);
+                var didx = sb.GetChunk(SoundBankChunkType.DIDX);
+                var hirc = sb.GetChunk(SoundBankChunkType.HIRC);
+            }
         }
 
         private void CreateClass()
@@ -1995,27 +2017,27 @@ namespace LegendaryExplorer.Tools.PackageEditor
                             break;
                         }
                     case "WwiseBank":
-                    {
-                        string extension = Path.GetExtension(".bnk");
-                        var wdiag = new OpenFileDialog
                         {
-                            Title = "Select WwiseBank file",
-                            Filter = $"*{extension}|*{extension}"
-                        };
-                        if (wdiag.ShowDialog() == true)
-                        {
-                            var length = new FileInfo(wdiag.FileName).Length;
-                            MemoryStream outStream = new MemoryStream();
-                            // Write Bulk Data header
-                            outStream.WriteInt32(0); // Local
-                            outStream.WriteInt32((int)length); // Compressed size
-                            outStream.WriteInt32((int)length); // Decompressed size
-                            outStream.WriteInt32(0); // Data offset - this is not external so this is not used
-                            outStream.Write(File.ReadAllBytes(wdiag.FileName));
-                            exp.WriteBinary(outStream.GetBuffer());
+                            string extension = Path.GetExtension(".bnk");
+                            var wdiag = new OpenFileDialog
+                            {
+                                Title = "Select WwiseBank file",
+                                Filter = $"*{extension}|*{extension}"
+                            };
+                            if (wdiag.ShowDialog() == true)
+                            {
+                                var length = new FileInfo(wdiag.FileName).Length;
+                                MemoryStream outStream = new MemoryStream();
+                                // Write Bulk Data header
+                                outStream.WriteInt32(0); // Local
+                                outStream.WriteInt32((int)length); // Compressed size
+                                outStream.WriteInt32((int)length); // Decompressed size
+                                outStream.WriteInt32(0); // Data offset - this is not external so this is not used
+                                outStream.Write(File.ReadAllBytes(wdiag.FileName));
+                                exp.WriteBinary(outStream.GetBuffer());
+                            }
+                            break;
                         }
-                        break;
-                    }
                 }
             }
         }

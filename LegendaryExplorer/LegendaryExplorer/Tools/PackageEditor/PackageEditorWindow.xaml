@@ -86,6 +86,9 @@
                 <MenuItem Header="Complete export data*"  Command="{Binding ImportAllDataCommand}" ToolTip="Import a .bin file and replace the contents of this export. This does NOT relink the data - this is for advanced users only!"/>
                 <MenuItem Header="Binary data only*"  Command="{Binding ImportBinaryDataCommand}" ToolTip="Import a .bin file and replace only the binary section of this export. This does NOT relink the data - this is for advanced users only!"/>
             </MenuItem>
+            <MenuItem Header="Experiments" IsEnabled="{Binding ShowExperiments, Converter={StaticResource BoolToVisibilityConverter}}">
+                <MenuItem Header="Analyze Wwisebank" Command="{Binding AnalyzeWwiseBankCommand}"  SharedUI:Bindings.VisibilityToEnabled="True"/>
+            </MenuItem>
             <Separator Visibility="{Binding ShowExperiments, Converter={StaticResource BoolToVisibilityConverter}}"/>
             <MenuItem 
                 Header="Generate MD5 of export"

@@ -91,6 +91,7 @@
     <ProjectReference Include="..\..\SharedProjects\HexConverterWPF\HexConverterWPF.csproj" />
     <ProjectReference Include="..\LegendaryExplorerCore\LegendaryExplorerCore.csproj" />
     <ProjectReference Include="..\WaveFormRendererLib\WaveFormRendererLib.csproj" />
+    <ProjectReference Include="..\WwiseParser\WwiseParserLib\WwiseParserLib.csproj" />
     <ProjectReference Include="..\Xceed.Wpf.Toolkit\DotNetProjects.Wpf.Extended.Toolkit.csproj" />
     <ProjectReference Include="..\..\SharedProjects\Piccolo\Piccolo.csproj" />
   </ItemGroup>
