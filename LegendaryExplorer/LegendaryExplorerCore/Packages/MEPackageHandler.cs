@@ -275,13 +275,24 @@ namespace LegendaryExplorerCore.Packages
             bool fullyCompressed = false;
 
             var er = new EndianReader(stream);
+            byte[] headerdata = null;
+
             var packageTag = stream.ReadUInt32();
             if (packageTag == UnrealPackageFile.packageTagBigEndian) er.Endian = Endian.Big;
             if (packageTag == MEPackage.ME1SavePackageTag)
             {
-                stream.ReadUInt32(); // Should be 1
-                stream.Seek(stream.ReadUInt32(), SeekOrigin.Begin);
-                packageTag = stream.ReadUInt32(); // Read the actual package tag
+                er.ReadUInt32(); // Should be 1
+                var packageStart = er.ReadInt32();
+                er.Seek(0, SeekOrigin.Begin);
+                headerdata = er.ReadToBuffer(packageStart);
+                
+                // Replace stream with actual package stream so offset jumps are correct
+                MemoryStream newStream = new MemoryStream();
+                //er.BaseStream.CopyTo(newStream);
+                //newStream.Position = 0;
+                //stream = newStream;
+                //er = new EndianReader(stream) { Endian = er.Endian };
+                packageTag = er.ReadUInt32(); // Read the actual package tag
             }
 
             // This is stored as integer by cooker as it is flipped by size word in big endian
@@ -327,6 +338,10 @@ namespace LegendaryExplorerCore.Packages
             {
                 stream.Position -= 8; //reset to start
                 pkg = MEStreamConstructorDelegate(stream, filePath, quickLoad, dataLoadPredicate);
+                if (headerdata != null)
+                {
+                    pkg.CustomMetadata["prepackageheader"] = headerdata;
+                }
                 MemoryAnalyzer.AddTrackedMemoryItem($"MEPackage {Path.GetFileName(filePath)}", new WeakReference(pkg));
             }
             else if (version is UDKPackage.UDKUnrealVersion2015 or UDKPackage.UDKUnrealVersion2014 or UDKPackage.UDKUnrealVersion2011 && licenseVersion == 0)

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using LegendaryExplorerCore.Compression;
 using LegendaryExplorerCore.Gammtek.IO;
+using LegendaryExplorerCore.Gammtek.Paths;
 using LegendaryExplorerCore.Helpers;
 using LegendaryExplorerCore.Memory;
 using LegendaryExplorerCore.Misc;
@@ -813,6 +814,17 @@ namespace LegendaryExplorerCore.Packages
                 {
                     mePackage.Flags &= ~EPackageFlags.Compressed;
                 }
+            }
+
+            if (mePackage.CustomMetadata.TryGetValue("prepackageheader", out var obj) && obj is byte[] data)
+            {
+                // Write the custom pre-package header (for ME1 saves)
+                ms.JumpTo(0);
+                MemoryStream reformed = new MemoryStream();
+                reformed.Write(data);
+                ms.CopyTo(reformed);
+                ms = reformed;
+                ms.JumpTo(0);
             }
 
             return ms;
