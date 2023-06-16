@@ -16,6 +16,11 @@ using LegendaryExplorer.SharedUI.Interfaces;
 using LegendaryExplorer.UserControls.SharedToolControls;
 using LegendaryExplorerCore.Packages;
 using Microsoft.Win32;
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using System.Text.Json.Nodes;
+using System.Text.Json;
+using LegendaryExplorer.Tools.TlkManagerNS;
+using LegendaryExplorerCore.PlotDatabase;
 
 namespace LegendaryExplorer.Tools.PlotEditor
 {
@@ -313,5 +318,174 @@ namespace LegendaryExplorer.Tools.PlotEditor
             }
             RecentsController?.Dispose();
         }
+
+        private void ExportFileMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            BioCodexMap bioCodexMap = CodexMapControl.ToCodexMap();
+            BioQuestMap bioQuestMap = QuestMapControl.ToQuestMap();
+            BioStateEventMap stateEventMap = StateEventMapControl.ToStateEventMap();
+            BioStateEventMap consequenceMap = ConsequenceMapControl.ToStateEventMap();
+
+            IEnumerable<KeyValuePair<int, JsonNode>> pageNodes = bioCodexMap.Pages.Select(p =>
+            {
+                var node = JsonSerializer.SerializeToNode(p.Value);
+                node["TitleString"] = TLKManagerWPF.GlobalFindStrRefbyID(p.Value.Title, Pcc.Game, null);
+                node["DescriptionString"] = TLKManagerWPF.GlobalFindStrRefbyID(p.Value.Description, Pcc.Game, null);
+                return new KeyValuePair<int, JsonNode>(p.Key, node);
+            });
+
+            IEnumerable<KeyValuePair<int, JsonNode>> sectionNodes = bioCodexMap.Sections.Select(p =>
+            {
+                var node = JsonSerializer.SerializeToNode(p.Value);
+                node["TitleString"] = TLKManagerWPF.GlobalFindStrRefbyID(p.Value.Title, Pcc.Game, null);
+                node["DescriptionString"] = TLKManagerWPF.GlobalFindStrRefbyID(p.Value.Description, Pcc.Game, null);
+                return new KeyValuePair<int, JsonNode>(p.Key, node);
+            });
+
+            IEnumerable<KeyValuePair<int, JsonNode>> questNodes = bioQuestMap.Quests.Select(q =>
+            {
+                var node = JsonSerializer.SerializeToNode(q.Value);
+                node["Goals"] = JsonSerializer.SerializeToNode(q.Value.Goals.Select(g =>
+                {
+                    var node = JsonSerializer.SerializeToNode(g);
+                    node["NameString"] = TLKManagerWPF.GlobalFindStrRefbyID(g.Name, Pcc.Game, null);
+                    node["DescriptionString"] = TLKManagerWPF.GlobalFindStrRefbyID(g.Description, Pcc.Game, null);
+                    node["StateName"] = PlotDatabases.FindPlotBoolByID(g.State, Pcc.Game)?.Path;
+                    node["ConditionalName"] = PlotDatabases.FindPlotConditionalByID(g.Conditional, Pcc.Game)?.Path;
+                    return node;
+                }));
+                node["PlotItems"] = JsonSerializer.SerializeToNode(q.Value.PlotItems.Select(g =>
+                {
+                    var node = JsonSerializer.SerializeToNode(g);
+                    node["NameString"] = TLKManagerWPF.GlobalFindStrRefbyID(g.Name, Pcc.Game, null);
+                    return node;
+                }));
+                node["Tasks"] = JsonSerializer.SerializeToNode(q.Value.Tasks.Select(g =>
+                {
+                    var node = JsonSerializer.SerializeToNode(g);
+                    node["NameString"] = TLKManagerWPF.GlobalFindStrRefbyID(g.Name, Pcc.Game, null);
+                    node["DescriptionString"] = TLKManagerWPF.GlobalFindStrRefbyID(g.Description, Pcc.Game, null);
+                    return node;
+                }));
+                return new KeyValuePair<int, JsonNode>(q.Key, node);
+
+            });
+
+            IEnumerable<KeyValuePair<int, JsonNode>> boolTaskEvalNodes = bioQuestMap.BoolTaskEvals.Select(e =>
+            {
+                var node = JsonSerializer.SerializeToNode(e.Value);
+
+                node["TaskEvals"] = JsonSerializer.SerializeToNode(e.Value.TaskEvals.Select(ev =>
+                {
+                    var node = JsonSerializer.SerializeToNode(ev);
+                    node["ConditionalName"] = PlotDatabases.FindPlotConditionalByID(ev.Conditional, Pcc.Game)?.Path;
+                    node["StateName"] = PlotDatabases.FindPlotBoolByID(ev.State, Pcc.Game)?.Path;
+                    var quest = bioQuestMap.Quests.FirstOrDefault(q => q.Key == ev.Quest).Value;
+                    if (quest != null)
+                    {
+                        var goalNameID = quest.Goals.FirstOrDefault()?.Name;
+                        var taskNameID = quest.Tasks.ElementAtOrDefault(ev.Task)?.Name;
+                        node["QuestName"] = TLKManagerWPF.GlobalFindStrRefbyID(goalNameID.Value, Pcc.Game, null);
+                        node["TaskName"] = TLKManagerWPF.GlobalFindStrRefbyID(taskNameID.Value, Pcc.Game, null);
+
+                    }
+                    return node;
+                }));
+
+                node["PlotElementName"] = PlotDatabases.FindPlotBoolByID(e.Key, Pcc.Game)?.Path;
+
+                return new KeyValuePair<int, JsonNode>(e.Key, node);
+            });
+            IEnumerable<KeyValuePair<int, JsonNode>> intTaskEvalNodes = bioQuestMap.IntTaskEvals.Select(e =>
+            {
+                var node = JsonSerializer.SerializeToNode(e.Value);
+
+                node["TaskEvals"] = JsonSerializer.SerializeToNode(e.Value.TaskEvals.Select(ev =>
+                {
+                    var node = JsonSerializer.SerializeToNode(ev);
+                    node["ConditionalName"] = PlotDatabases.FindPlotConditionalByID(ev.Conditional, Pcc.Game)?.Path;
+                    node["StateName"] = PlotDatabases.FindPlotBoolByID(ev.State, Pcc.Game)?.Path;
+                    var quest = bioQuestMap.Quests.FirstOrDefault(q => q.Key == ev.Quest).Value;
+                    if (quest != null)
+                    {
+                        var goalNameID = quest.Goals.FirstOrDefault()?.Name;
+                        var taskNameID = quest.Tasks.ElementAtOrDefault(ev.Task)?.Name;
+                        node["QuestName"] = TLKManagerWPF.GlobalFindStrRefbyID(goalNameID.Value, Pcc.Game, null);
+                        node["TaskName"] = TLKManagerWPF.GlobalFindStrRefbyID(taskNameID.Value, Pcc.Game, null);
+
+                    }
+                    return node;
+                }));
+
+                node["PlotElementName"] = PlotDatabases.FindPlotBoolByID(e.Key, Pcc.Game)?.Path;
+
+                return new KeyValuePair<int, JsonNode>(e.Key, node);
+            });
+
+            IEnumerable<KeyValuePair<int, JsonNode>> stateEventNodes = stateEventMap.StateEvents.Select(e =>
+            {
+                var node = JsonSerializer.SerializeToNode(e.Value);
+                node["Elements"] = JsonSerializer.SerializeToNode(e.Value.Elements.Select(ele =>
+                {
+                    var node = JsonSerializer.SerializeToNode(ele);
+                    switch (ele)
+                    {
+                        case BioStateEventElementBool boolElement:
+                            node["GlobalBoolName"] = PlotDatabases.FindPlotBoolByID(boolElement.GlobalBool, Pcc.Game)?.Path;
+                            break;
+                        case BioStateEventElementSubstate substateElement:
+                            node["GlobalBoolName"] = PlotDatabases.FindPlotBoolByID(substateElement.GlobalBool, Pcc.Game)?.Path;
+                            node["ParentIndexName"] = PlotDatabases.FindPlotBoolByID(substateElement.ParentIndex, Pcc.Game)?.Path;
+                            node["SiblingIndicesNames"] = JsonSerializer.SerializeToNode(substateElement.SiblingIndices.Select(i => PlotDatabases.FindPlotBoolByID(i, Pcc.Game)?.Path));
+                            break;
+                        case BioStateEventElementInt intElement:
+                            node["GlobalIntName"] = PlotDatabases.FindPlotIntByID(intElement.GlobalInt, Pcc.Game)?.Path;
+                            break;
+                        
+                    }
+                    return node;
+                }));
+
+                return new KeyValuePair<int, JsonNode>(e.Key, node);
+            });
+
+
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                //Codex = new
+                //{
+                //    Sections = CodexMapControl.CodexSections.Select(kvp => kvp.Value),
+                //    Pages = CodexMapControl.CodexPages.Select(kvp => kvp.Value),
+                //}
+                Codex = new {
+                    Sections = new Dictionary<int, JsonNode>(sectionNodes),
+                    Pages = new Dictionary<int, JsonNode>(pageNodes),
+                },
+                QuestMap = new Dictionary<int, JsonNode>(questNodes),
+                BoolTaskEvals = new Dictionary<int, JsonNode>(boolTaskEvalNodes),
+                IntTaskEvals = new Dictionary<int, JsonNode>(intTaskEvalNodes),
+                StateEventMap = new Dictionary<int, JsonNode>(stateEventNodes),
+                ConsequenceMap = consequenceMap,
+                
+            }, options);
+
+            var initialFileName = Pcc.FileNameNoExtension;
+
+            var dlg = new SaveFileDialog { FileName =  initialFileName, Filter = "JSON files|*.json" };
+
+            if (dlg.ShowDialog() != true)
+            {
+                return;
+            }
+
+            File.WriteAllText(dlg.FileName, json.ToString());
+        }
+
+        
     }
 }

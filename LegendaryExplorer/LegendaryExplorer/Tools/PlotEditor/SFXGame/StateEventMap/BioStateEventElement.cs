@@ -1,8 +1,19 @@
-﻿namespace Gammtek.Conduit.MassEffect3.SFXGame.StateEventMap
+﻿using System.Text.Json.Serialization;
+
+namespace Gammtek.Conduit.MassEffect3.SFXGame.StateEventMap
 {
 	/// <summary>
 	/// </summary>
-	public abstract class BioStateEventElement : BioVersionedNativeObject
+	[JsonDerivedType(typeof(BioStateEventElementBool))]
+    [JsonDerivedType(typeof(BioStateEventElementConsequence))]
+    [JsonDerivedType(typeof(BioStateEventElementFloat))]
+    [JsonDerivedType(typeof(BioStateEventElementFunction))]
+    [JsonDerivedType(typeof(BioStateEventElementInt))]
+    [JsonDerivedType(typeof(BioStateEventElementLocalBool))]
+    [JsonDerivedType(typeof(BioStateEventElementLocalFloat))]
+    [JsonDerivedType(typeof(BioStateEventElementLocalInt))]
+    [JsonDerivedType(typeof(BioStateEventElementSubstate))]
+    public abstract class BioStateEventElement : BioVersionedNativeObject
 	{
 		/// <summary>
 		/// </summary>

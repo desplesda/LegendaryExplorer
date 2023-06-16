@@ -57,6 +57,8 @@
                     <MenuItem Header="_Save" x:Name="SaveFileMenuItem" Command="Save" />
                     <MenuItem Header="_Save As" x:Name="SaveAsFileMenuItem" Command="SaveAs" />
                     <Separator />
+                    <MenuItem Header="_Export as JSON" x:Name="ExportFileMenuItem" Click="ExportFileMenuItem_Click"/>
+                    <Separator />
                     <MenuItem Name="Recents_MenuItem" Header="Recent" IsEnabled="false" />
                 </MenuItem>
                 <MenuItem HorizontalAlignment="Right"

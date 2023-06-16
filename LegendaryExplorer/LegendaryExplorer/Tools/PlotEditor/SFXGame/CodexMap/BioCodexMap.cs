@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Nodes;
+using LegendaryExplorer.Tools.PlotEditor.SFXGame;
 using LegendaryExplorerCore.Gammtek.ComponentModel;
 
 namespace Gammtek.Conduit.MassEffect3.SFXGame.CodexMap
@@ -25,5 +27,7 @@ namespace Gammtek.Conduit.MassEffect3.SFXGame.CodexMap
 			get => _sections;
 		    set => SetProperty(ref _sections, value);
 		}
-	}
+
+       
+    }
 }
